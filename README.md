@@ -25,4 +25,25 @@ Hệ thống chấm điểm điện tử chuyên dụng cho các giải đấu v
 3. Chia sẻ link: `http://<IP_CUA_BAN>:5001`.
 
 ## 🔌 Tích hợp hệ thống (Tournament API)
-Hệ thống hỗ trợ gửi dữ liệu kết quả về máy chủ trung tâm thông qua Webhook hoặc API Call sau khi kết thúc trận đấu.
+
+Hệ thống hỗ trợ tự động gửi kết quả về máy chủ trung tâm (Hệ thống quản lý giải đấu) ngay khi nhấn **"KẾT THÚC"**.
+
+### 1. Cấu hình Webhook
+Mở file `app.py`, tìm hàm `send_result_to_server` và cập nhật các thông tin sau từ phía đối tác:
+- `WEBHOOK_URL`: Địa chỉ nhận dữ liệu của hệ thống tổng.
+- `HEADERS`: Token xác thực (nếu có).
+
+### 2. Cấu trúc dữ liệu gửi đi (JSON Payload)
+Khi trận đấu kết thúc, hệ thống sẽ gửi một yêu cầu `POST` với cấu trúc:
+
+| Trường | Kiểu dữ liệu | Mô tả |
+| :--- | :--- | :--- |
+| `match_id` | String | ID duy nhất của trận đấu |
+| `p1_name` | String | Tên võ sĩ góc đài xanh |
+| `p2_name` | String | Tên võ sĩ góc đài đỏ |
+| `scores` | Object | Bao gồm `p1_total` và `p2_total` |
+| `outcome` | Object | Kết quả (`winner_id`, `result_type`, `status`) |
+| `timestamp`| String | Thời gian kết thúc trận đấu |
+
+### 3. Phản hồi yêu cầu
+Hệ thống tổng cần trả về mã trạng thái **HTTP 200** hoặc **201** để xác nhận đã nhận dữ liệu thành công. Mọi lỗi kết nối sẽ được ghi lại (Log) tại Terminal của máy chủ V-Combat.
