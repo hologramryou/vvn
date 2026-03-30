@@ -1,49 +1,102 @@
 # 🥊 VVN Combat - Hệ thống Chấm điểm Võ thuật Realtime
 
-Hệ thống chấm điểm điện tử chuyên dụng cho các giải đấu võ thuật (Vovinam, Taekwondo, Kickboxing...), hỗ trợ 5 trọng tài chấm điểm đồng thời và hiển thị lịch sử khớp điểm thời gian thực.
+Hệ thống chấm điểm điện tử chuyên dụng cho các giải đấu võ thuật (Vovinam, Taekwondo, Kickboxing...), hỗ trợ tối đa 5 trọng tài chấm điểm đồng thời và hiển thị lịch sử khớp điểm thời gian thực.
+
+---
 
 ## 🚀 Tính năng chính
 - **Realtime Scoreboard**: Cập nhật điểm số ngay lập tức qua Socket.io.
-- **Multi-Judge Support**: Hỗ trợ tối đa 5 trọng tài với định danh riêng.
-- **Auto-Sync History**: Tự động lưu và hiển thị lịch sử chấm điểm sau mỗi 3 giây.
-- **Admin Control**: Quản lý trận đấu, thời gian, và thiết lập võ sĩ.
-- **Portable**: Chạy trực tiếp trên macOS/Linux với script tự động.
+- **Multi-Judge Support**: Hỗ trợ tối đa 5 trọng tài với định danh riêng (J1-J5).
+- **Auto-Sync History**: Tự động lưu và hiển thị lịch sử chấm điểm vào Database sau mỗi 3 giây.
+- **Admin Control**: Quản lý trận đấu, thời gian, thiết lập võ sĩ và kết thúc trận đấu.
+- **Webhook Integration**: Tự động đẩy kết quả về hệ thống quản lý giải đấu trung tâm.
 
-## 🛠 Cài đặt nhanh (Quick Start)
-1. **Yêu cầu**: Máy đã cài Python 3.11+.
-2. **Thực thi**:
-   - Chuột phải vào file `run.command` chọn **Open**.
-   - Hoặc chạy lệnh: `./run.command` trong Terminal.
-3. **Truy cập**:
-   - **Admin**: `http://localhost:5001/admin` (User: `admin` / Pass: `admin123`)
-   - **Trọng tài**: Truy cập qua IP máy chủ (Ví dụ: `http://192.168.1.15:5001`)
+---
+
+## 🛠 Cài đặt & Khởi chạy (Quick Start)
+
+### 1. Yêu cầu hệ thống
+- Máy tính cài sẵn **Python 3.11+**.
+- Các thiết bị (Admin, Trọng tài) phải kết nối cùng một mạng nội bộ (Wi-Fi/LAN).
+
+### 2. Cách khởi chạy nhanh (Mac/Linux)
+1. Mở thư mục dự án trong Terminal.
+2. Cấp quyền thực thi cho file chạy:
+   ```bash
+   chmod +x run.command
+   ```
+3. Click đúp vào file `run.command` hoặc chạy `./run.command`.
+
+### 3. Truy cập giao diện
+- **Admin**: `http://<IP_CUA_BAN>:5001/admin` (User: `admin` / Pass: `admin123`).
+- **Trọng tài**: `http://<IP_CUA_BAN>:5001/` (Đăng nhập theo J1, J2... và ID trận đấu).
+
+---
 
 ## 🌐 Chia sẻ trong mạng nội bộ
-Để các trọng tài có thể truy cập bằng điện thoại:
-1. Kết nối tất cả thiết bị vào cùng một mạng WiFi.
-2. Lấy IP máy chủ (gõ `ifconfig` trong Terminal).
-3. Chia sẻ link: `http://<IP_CUA_BAN>:5001`.
+Để lấy địa chỉ IP gửi cho các trọng tài, gõ lệnh sau trong Terminal máy chủ:
+```bash
+ipconfig getifaddr en0
+```
+*(Link truy cập sẽ có dạng: `http://192.168.1.15:5001`)*
 
-## 🔌 Tích hợp hệ thống (Tournament API)
+---
 
-Hệ thống hỗ trợ tự động gửi kết quả về máy chủ trung tâm (Hệ thống quản lý giải đấu) ngay khi nhấn **"KẾT THÚC"**.
+## 🔌 Tài liệu đấu nối API (Webhook Specification)
 
-### 1. Cấu hình Webhook
-Mở file `app.py`, tìm hàm `send_result_to_server` và cập nhật các thông tin sau từ phía đối tác:
-- `WEBHOOK_URL`: Địa chỉ nhận dữ liệu của hệ thống tổng.
-- `HEADERS`: Token xác thực (nếu có).
+Hệ thống hỗ trợ gửi dữ liệu kết quả về máy chủ trung tâm thông qua Webhook sau khi nhấn nút **"Kết thúc"**.
+
+### 1. Yêu cầu phía Hệ thống Tổng
+Cung cấp một Webhook URL (Endpoint) tiếp nhận dữ liệu:
+- **Phương thức**: `POST`
+- **Xác thực**: Hỗ trợ `API-Key` hoặc `Bearer Token` trong Header.
 
 ### 2. Cấu trúc dữ liệu gửi đi (JSON Payload)
-Khi trận đấu kết thúc, hệ thống sẽ gửi một yêu cầu `POST` với cấu trúc:
+```json
+{
+  "match_id": "001",              // ID trận đấu lấy từ hệ thống của bạn
+  "p1_name": "Võ sĩ Xanh",        // Tên võ sĩ 1 (Góc đài Xanh)
+  "p2_name": "Võ sĩ Đỏ",          // Tên võ sĩ 2 (Góc đài Đỏ)
+  "scores": {
+    "p1_total": 15,               // Tổng điểm võ sĩ 1
+    "p2_total": 10                // Tổng điểm võ sĩ 2
+  },
+  "outcome": {
+    "winner_id": "p1",            // Định danh thắng cuộc (p1 hoặc p2)
+    "result_type": "POINTS",      // Loại kết quả (POINTS, KO, TKO, DQ)
+    "status": "COMPLETED"         // Trạng thái trận đấu
+  },
+  "timestamp": "2026-03-30 16:00:00"
+}
+```
 
-| Trường | Kiểu dữ liệu | Mô tả |
-| :--- | :--- | :--- |
-| `match_id` | String | ID duy nhất của trận đấu |
-| `p1_name` | String | Tên võ sĩ góc đài xanh |
-| `p2_name` | String | Tên võ sĩ góc đài đỏ |
-| `scores` | Object | Bao gồm `p1_total` và `p2_total` |
-| `outcome` | Object | Kết quả (`winner_id`, `result_type`, `status`) |
-| `timestamp`| String | Thời gian kết thúc trận đấu |
+### 3. Cấu hình phía V-Combat
+Chỉnh sửa các biến sau trong file `app.py` để khớp với hệ thống của đối tác:
+```python
+WEBHOOK_URL = "https://tournament-system.com/api/v1/match-results"
+HEADERS = {"Authorization": "Bearer YOUR_TOKEN_HERE"}
+```
 
-### 3. Phản hồi yêu cầu
-Hệ thống tổng cần trả về mã trạng thái **HTTP 200** hoặc **201** để xác nhận đã nhận dữ liệu thành công. Mọi lỗi kết nối sẽ được ghi lại (Log) tại Terminal của máy chủ V-Combat.
+### 4. Phản hồi mong đợi (Response)
+Hệ thống tổng cần trả về mã trạng thái thành công:
+- **Success**: `HTTP 200 OK` hoặc `HTTP 201 Created`
+- **Body**: `{"status": "success", "message": "Result updated"}`
+
+---
+
+## 📂 Cấu trúc thư mục dự án
+```text
+vvn/
+├── app.py              # Xử lý Logic Server & SocketIO
+├── combat.db           # Cơ sở dữ liệu SQLite lưu trữ lịch sử
+├── run.command         # Script khởi chạy nhanh trên Mac
+├── requirements.txt    # Danh sách thư viện cần thiết
+└── templates/          # Giao diện HTML (Admin, Judge, Login)
+```
+
+---
+
+## ⚠️ Lưu ý vận hành
+1. **Clear Data**: Mỗi khi nhấn "Cập nhật" thông tin trận đấu mới, Database của `match_id` đó sẽ được làm sạch để bắt đầu chấm điểm lại từ đầu.
+2. **Firewall**: Nếu trọng tài không truy cập được link IP, hãy kiểm tra và tắt Firewall trên máy chủ hoặc cho phép cổng `5001`.
+
